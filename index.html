@@ -5,18 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Firmenwagen Buchung</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap');
 
   :root {
-    --bg: #0f0f0f;
-    --surface: #1a1a1a;
-    --surface2: #242424;
-    --border: #2e2e2e;
-    --accent: #c8f545;
-    --accent2: #f5a623;
-    --text: #f0f0f0;
-    --muted: #666;
-    --danger: #ff4d4d;
+    --bg: #f0f4f8;
+    --surface: #ffffff;
+    --surface2: #f7f9fc;
+    --border: #dde3ec;
+    --accent: #2563eb;
+    --accent-light: #eff4ff;
+    --accent2: #f59e0b;
+    --accent2-light: #fffbeb;
+    --text: #1e293b;
+    --muted: #64748b;
+    --danger: #ef4444;
+    --danger-light: #fef2f2;
+    --success: #16a34a;
+    --success-light: #f0fdf4;
     --radius: 12px;
   }
 
@@ -25,7 +30,7 @@
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: 'Syne', sans-serif;
+    font-family: 'Inter', sans-serif;
     min-height: 100vh;
     padding: 24px 16px;
   }
@@ -34,7 +39,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 32px;
+    margin-bottom: 24px;
     flex-wrap: wrap;
     gap: 12px;
   }
@@ -49,7 +54,7 @@
     font-size: 22px;
   }
 
-  h1 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px; }
+  h1 { font-size: 1.3rem; font-weight: 700; color: var(--text); }
   h1 span { color: var(--accent); }
 
   .status-badge {
@@ -57,15 +62,16 @@
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 999px;
-    padding: 8px 16px;
+    padding: 7px 16px;
     font-family: 'DM Mono', monospace;
-    font-size: 0.78rem;
+    font-size: 0.76rem;
+    color: var(--muted);
   }
 
   .dot {
     width: 8px; height: 8px;
     border-radius: 50%;
-    background: var(--accent);
+    background: var(--success);
     animation: pulse 2s infinite;
   }
   .dot.busy { background: var(--danger); }
@@ -78,8 +84,8 @@
 
   .grid {
     display: grid;
-    grid-template-columns: 1fr 340px;
-    gap: 20px;
+    grid-template-columns: 1fr 330px;
+    gap: 18px;
   }
 
   @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
@@ -88,49 +94,50 @@
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 24px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   }
 
   .card-title {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-family: 'DM Mono', monospace;
     color: var(--muted);
     text-transform: uppercase;
     letter-spacing: 2px;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
   }
 
   .cal-nav {
     display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
   }
 
   .cal-nav button {
     background: var(--surface2);
     border: 1px solid var(--border);
     color: var(--text);
-    width: 32px; height: 32px;
+    width: 30px; height: 30px;
     border-radius: 8px;
     cursor: pointer;
     font-size: 1rem;
     display: flex; align-items: center; justify-content: center;
     transition: background 0.15s;
   }
-  .cal-nav button:hover { background: var(--border); }
-  .cal-month { font-weight: 700; font-size: 1rem; }
+  .cal-nav button:hover { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+  .cal-month { font-weight: 600; font-size: 0.95rem; color: var(--text); }
 
   .cal-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 4px;
+    gap: 3px;
   }
 
   .cal-day-label {
     text-align: center;
     font-family: 'DM Mono', monospace;
-    font-size: 0.68rem;
+    font-size: 0.65rem;
     color: var(--muted);
-    padding: 4px 0 8px;
+    padding: 3px 0 7px;
     text-transform: uppercase;
   }
 
@@ -138,19 +145,21 @@
     aspect-ratio: 1;
     display: flex; align-items: center; justify-content: center;
     border-radius: 8px;
-    font-size: 0.82rem;
-    font-weight: 600;
+    font-size: 0.8rem;
+    font-weight: 500;
     cursor: pointer;
     position: relative;
-    transition: background 0.15s;
+    transition: background 0.12s, color 0.12s;
     border: 1px solid transparent;
+    color: var(--text);
   }
 
-  .cal-day:hover:not(.empty):not(.past) { background: var(--surface2); border-color: var(--border); }
+  .cal-day:hover:not(.empty):not(.past) { background: var(--accent-light); color: var(--accent); }
   .cal-day.empty { cursor: default; }
-  .cal-day.past { color: var(--muted); cursor: default; }
-  .cal-day.today { border-color: var(--accent); color: var(--accent); }
-  .cal-day.selected { background: var(--accent); color: #000; }
+  .cal-day.past { color: #c1cad6; cursor: default; }
+  .cal-day.today { border-color: var(--accent); color: var(--accent); font-weight: 700; }
+  .cal-day.selected { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .cal-day.selected:hover { background: var(--accent); color: #fff; }
   .cal-day.has-booking::after {
     content: '';
     position: absolute;
@@ -159,19 +168,21 @@
     border-radius: 50%;
     background: var(--accent2);
   }
-  .cal-day.has-booking.selected::after { background: #000; }
+  .cal-day.has-booking.selected::after { background: rgba(255,255,255,0.7); }
 
-  .booking-list { display: flex; flex-direction: column; gap: 10px; min-height: 80px; }
+  .booking-list { display: flex; flex-direction: column; gap: 8px; min-height: 80px; }
 
   .booking-item {
-    display: flex; align-items: center; gap: 12px;
+    display: flex; align-items: center; gap: 10px;
     background: var(--surface2);
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 12px 14px;
+    padding: 11px 13px;
     position: relative;
     overflow: hidden;
+    transition: box-shadow 0.15s;
   }
+  .booking-item:hover { box-shadow: 0 2px 8px rgba(37,99,235,0.08); }
 
   .booking-item::before {
     content: '';
@@ -180,43 +191,46 @@
     background: var(--accent2);
     border-radius: 3px 0 0 3px;
   }
-  .booking-item.active-now::before { background: var(--accent); }
+  .booking-item.active-now { background: var(--success-light); border-color: #86efac; }
+  .booking-item.active-now::before { background: var(--success); }
+
   .booking-info { flex: 1; }
-  .booking-name { font-weight: 700; font-size: 0.9rem; }
+  .booking-name { font-weight: 600; font-size: 0.88rem; color: var(--text); }
   .booking-time {
     font-family: 'DM Mono', monospace;
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     color: var(--muted);
     margin-top: 2px;
   }
-  .booking-purpose { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+  .booking-purpose { font-size: 0.76rem; color: var(--muted); margin-top: 1px; }
 
   .delete-btn {
     background: none; border: none;
-    color: var(--muted); cursor: pointer;
-    font-size: 1rem; padding: 4px;
+    color: #c1cad6; cursor: pointer;
+    font-size: 0.85rem; padding: 5px 7px;
     border-radius: 6px;
     transition: color 0.15s, background 0.15s;
+    font-weight: 600;
   }
-  .delete-btn:hover { color: var(--danger); background: #2a1a1a; }
+  .delete-btn:hover { color: var(--danger); background: var(--danger-light); }
 
   .empty-state {
     text-align: center;
     color: var(--muted);
-    font-size: 0.85rem;
-    padding: 24px 0;
+    font-size: 0.82rem;
+    padding: 20px 0;
     font-family: 'DM Mono', monospace;
   }
 
-  .form-group { margin-bottom: 16px; }
+  .form-group { margin-bottom: 13px; }
   label {
     display: block;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     color: var(--muted);
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
-    margin-bottom: 6px;
+    letter-spacing: 0.8px;
+    margin-bottom: 5px;
   }
 
   input {
@@ -224,38 +238,38 @@
     background: var(--surface2);
     border: 1px solid var(--border);
     color: var(--text);
-    padding: 10px 12px;
+    padding: 9px 11px;
     border-radius: 8px;
-    font-family: 'Syne', sans-serif;
-    font-size: 0.9rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.88rem;
     outline: none;
-    transition: border-color 0.15s;
+    transition: border-color 0.15s, box-shadow 0.15s;
   }
-  input:focus { border-color: var(--accent); }
-  .time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+  .time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
   .btn {
     width: 100%;
     background: var(--accent);
-    color: #000;
+    color: #fff;
     border: none;
-    padding: 12px;
+    padding: 11px;
     border-radius: 10px;
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 0.95rem;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
     cursor: pointer;
-    transition: opacity 0.15s, transform 0.1s;
+    transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+    box-shadow: 0 2px 8px rgba(37,99,235,0.2);
   }
-  .btn:hover { opacity: 0.88; transform: translateY(-1px); }
+  .btn:hover { background: #1d4ed8; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
   .btn:active { transform: translateY(0); }
-  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
 
   .selected-date-label {
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     color: var(--muted);
-    margin-bottom: 16px;
-    font-family: 'DM Mono', monospace;
+    margin-bottom: 14px;
   }
   .selected-date-label span { color: var(--accent); font-weight: 600; }
 
@@ -263,56 +277,104 @@
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 16px 20px;
-    margin-bottom: 20px;
+    padding: 14px 18px;
+    margin-bottom: 18px;
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   }
-  .status-banner.in-use { border-color: var(--accent); background: #151f00; }
+  .status-banner.in-use { border-color: #86efac; background: var(--success-light); }
   .status-info { flex: 1; }
   .status-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     text-transform: uppercase;
-    letter-spacing: 2px;
+    letter-spacing: 1.5px;
     color: var(--muted);
-    margin-bottom: 4px;
+    font-weight: 600;
+    margin-bottom: 3px;
   }
-  .status-value { font-weight: 700; font-size: 1rem; }
-  .status-sub { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
+  .status-value { font-weight: 700; font-size: 0.95rem; color: var(--text); }
+  .status-sub { font-size: 0.78rem; color: var(--muted); margin-top: 1px; }
 
   .sync-bar {
-    display: flex; align-items: center; gap: 8px;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.72rem;
+    display: flex; align-items: center; gap: 7px;
+    font-size: 0.7rem;
     color: var(--muted);
-    margin-bottom: 20px;
+    margin-bottom: 18px;
+    font-family: 'DM Mono', monospace;
   }
-  .sync-bar .sync-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--accent);
-  }
+  .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
   .sync-bar.syncing .sync-dot { background: var(--accent2); animation: pulse 1s infinite; }
   .sync-bar.error .sync-dot { background: var(--danger); }
+
+  /* Confirm dialog */
+  .overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(15,23,42,0.35);
+    z-index: 100;
+    align-items: center; justify-content: center;
+  }
+  .overlay.show { display: flex; }
+  .dialog {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    width: 320px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    text-align: center;
+  }
+  .dialog-icon { font-size: 2rem; margin-bottom: 10px; }
+  .dialog h3 { font-size: 1rem; font-weight: 700; margin-bottom: 6px; color: var(--text); }
+  .dialog p { font-size: 0.83rem; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+  .dialog-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .btn-cancel {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 9px;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-cancel:hover { background: var(--border); }
+  .btn-danger {
+    background: var(--danger);
+    color: #fff;
+    border: none;
+    padding: 9px;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-danger:hover { background: #dc2626; }
 
   .toast {
     position: fixed;
     bottom: 24px; right: 24px;
-    background: var(--accent);
-    color: #000;
-    padding: 12px 20px;
+    background: var(--text);
+    color: #fff;
+    padding: 11px 18px;
     border-radius: 10px;
-    font-weight: 700;
-    font-size: 0.85rem;
+    font-weight: 600;
+    font-size: 0.82rem;
     transform: translateY(80px);
     opacity: 0;
     transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     z-index: 999;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
   }
   .toast.show { transform: translateY(0); opacity: 1; }
-  .toast.error { background: var(--danger); color: #fff; }
+  .toast.success { background: var(--success); }
+  .toast.error { background: var(--danger); }
 </style>
 </head>
 <body>
@@ -322,7 +384,7 @@
     <div class="car-icon">🚗</div>
     <div>
       <h1>Firmen<span>wagen</span></h1>
-      <div style="font-size:0.75rem;color:var(--muted);font-family:'DM Mono',monospace;">Buchungssystem</div>
+      <div style="font-size:0.72rem;color:var(--muted);margin-top:1px;">Buchungssystem — HUZ</div>
     </div>
   </div>
   <div class="status-badge">
@@ -332,7 +394,7 @@
 </header>
 
 <div id="statusBanner" class="status-banner">
-  <div style="font-size:2rem;" id="statusIcon">⏳</div>
+  <div style="font-size:1.8rem;" id="statusIcon">⏳</div>
   <div class="status-info">
     <div class="status-label">Aktueller Status</div>
     <div class="status-value" id="statusValue">Daten werden geladen...</div>
@@ -347,7 +409,7 @@
 
 <div class="grid">
   <div>
-    <div class="card" style="margin-bottom:20px;">
+    <div class="card" style="margin-bottom:18px;">
       <div class="card-title">Kalender</div>
       <div class="cal-nav">
         <button onclick="changeMonth(-1)">&#8249;</button>
@@ -384,9 +446,22 @@
       <button class="btn" id="submitBtn" onclick="addBooking()">+ Buchung eintragen</button>
     </div>
 
-    <div class="card" style="margin-top:20px;">
+    <div class="card" style="margin-top:18px;">
       <div class="card-title">Nächste Buchungen</div>
       <div id="upcomingList" class="booking-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm delete dialog -->
+<div class="overlay" id="deleteOverlay">
+  <div class="dialog">
+    <div class="dialog-icon">🗑️</div>
+    <h3>Buchung löschen?</h3>
+    <p id="deleteDialogText">Möchten Sie diese Buchung wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.</p>
+    <div class="dialog-btns">
+      <button class="btn-cancel" onclick="cancelDelete()">Abbrechen</button>
+      <button class="btn-danger" onclick="confirmDelete()">Löschen</button>
     </div>
   </div>
 </div>
@@ -403,18 +478,18 @@
   var selectedDate = new Date();
   selectedDate.setHours(0,0,0,0);
   var isSaving = false;
+  var pendingDeleteId = null;
 
   function setSyncState(state, text) {
     var bar = document.getElementById('syncBar');
-    var syncText = document.getElementById('syncText');
     bar.className = 'sync-bar' + (state ? ' ' + state : '');
-    syncText.textContent = text;
+    document.getElementById('syncText').textContent = text;
   }
 
-  function showToast(msg, isError) {
+  function showToast(msg, type) {
     var t = document.getElementById('toast');
     t.textContent = msg;
-    t.className = 'toast show' + (isError ? ' error' : '');
+    t.className = 'toast show' + (type ? ' ' + type : '');
     setTimeout(function() { t.className = 'toast'; }, 2800);
   }
 
@@ -430,12 +505,14 @@
     return d.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' });
   }
 
+  function escHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
   async function loadBookings() {
     setSyncState('syncing', 'Buchungen laden...');
     try {
-      var resp = await fetch(BASE_URL + '/latest', {
-        headers: { 'X-Access-Key': API_KEY }
-      });
+      var resp = await fetch(BASE_URL + '/latest', { headers: { 'X-Access-Key': API_KEY } });
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
       var data = await resp.json();
       bookings = data.record.bookings || [];
@@ -443,7 +520,7 @@
       renderAll();
     } catch(e) {
       setSyncState('error', 'Verbindungsfehler');
-      showToast('⚠️ Daten konnten nicht geladen werden', true);
+      showToast('⚠️ Daten konnten nicht geladen werden', 'error');
     }
   }
 
@@ -455,17 +532,14 @@
     try {
       var resp = await fetch(BASE_URL, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Access-Key': API_KEY
-        },
+        headers: { 'Content-Type': 'application/json', 'X-Access-Key': API_KEY },
         body: JSON.stringify({ bookings: bookings })
       });
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
       setSyncState('', 'Gespeichert ✓');
     } catch(e) {
       setSyncState('error', 'Speichern fehlgeschlagen');
-      showToast('⚠️ Speichern fehlgeschlagen', true);
+      showToast('⚠️ Speichern fehlgeschlagen', 'error');
     }
     isSaving = false;
     document.getElementById('submitBtn').disabled = false;
@@ -488,8 +562,7 @@
     var grid = document.getElementById('calGrid');
     grid.innerHTML = '';
 
-    var days = ['Mo','Di','Mi','Do','Fr','Sa','So'];
-    days.forEach(function(d) {
+    ['Mo','Di','Mi','Do','Fr','Sa','So'].forEach(function(d) {
       var el = document.createElement('div');
       el.className = 'cal-day-label';
       el.textContent = d;
@@ -499,7 +572,6 @@
     var firstDay = new Date(year, month, 1);
     var startOffset = firstDay.getDay() - 1;
     if (startOffset < 0) startOffset = 6;
-
     for (var i = 0; i < startOffset; i++) {
       var el = document.createElement('div');
       el.className = 'cal-day empty';
@@ -513,7 +585,6 @@
       var el = document.createElement('div');
       el.className = 'cal-day';
       el.innerHTML = '<span>' + d + '</span>';
-
       var thisDate = new Date(year, month, d);
       var dateStr = formatDate(thisDate);
       var dayBookings = bookings.filter(function(b) { return b.date === dateStr; });
@@ -540,7 +611,6 @@
   function renderBookingList() {
     var dateStr = formatDate(selectedDate);
     document.getElementById('selectedDateLabel').textContent = formatDateDisplay(dateStr);
-
     var list = document.getElementById('bookingList');
     var dayBookings = bookings.filter(function(b) { return b.date === dateStr; })
       .sort(function(a,b) { return a.start.localeCompare(b.start); });
@@ -549,24 +619,22 @@
       list.innerHTML = '<div class="empty-state">Keine Buchungen für diesen Tag</div>';
       return;
     }
-
     list.innerHTML = '';
     var now = new Date();
     dayBookings.forEach(function(b) {
       var start = new Date(dateStr + 'T' + b.start + ':00');
       var end = new Date(dateStr + 'T' + b.end + ':00');
       var isNow = now >= start && now <= end;
-
       var item = document.createElement('div');
       item.className = 'booking-item' + (isNow ? ' active-now' : '');
       item.innerHTML =
-        '<div style="font-size:1.4rem">' + (isNow ? '🚗' : '📅') + '</div>' +
+        '<div style="font-size:1.3rem">' + (isNow ? '🚗' : '📅') + '</div>' +
         '<div class="booking-info">' +
           '<div class="booking-name">' + escHtml(b.name) + '</div>' +
           '<div class="booking-time">' + b.start + ' – ' + b.end + ' Uhr</div>' +
           (b.purpose ? '<div class="booking-purpose">' + escHtml(b.purpose) + '</div>' : '') +
         '</div>' +
-        '<button class="delete-btn" onclick="deleteBooking(\'' + b.id + '\')">✕</button>';
+        '<button class="delete-btn" title="Buchung löschen" onclick="askDelete(\'' + b.id + '\',\'' + escHtml(b.name) + '\')">✕</button>';
       list.appendChild(item);
     });
   }
@@ -601,7 +669,6 @@
     var now = new Date();
     var todayStr = formatDate(now);
     var nowTime = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
-
     var active = null;
     for (var i = 0; i < bookings.length; i++) {
       var b = bookings[i];
@@ -611,20 +678,19 @@
     var banner = document.getElementById('statusBanner');
     var dot = document.getElementById('headerDot');
     var headerText = document.getElementById('headerStatusText');
-    var icon = document.getElementById('statusIcon');
 
     if (active) {
       banner.className = 'status-banner in-use';
       document.getElementById('statusValue').textContent = active.name + ' fährt gerade';
       document.getElementById('statusSub').textContent = active.start + ' – ' + active.end + ' Uhr' + (active.purpose ? ' · ' + active.purpose : '');
-      icon.textContent = '🚗';
+      document.getElementById('statusIcon').textContent = '🚗';
       dot.className = 'dot busy';
       headerText.textContent = 'In Benutzung';
     } else {
       banner.className = 'status-banner';
       document.getElementById('statusValue').textContent = 'Fahrzeug verfügbar';
       document.getElementById('statusSub').textContent = 'Keine aktive Buchung';
-      icon.textContent = '🟢';
+      document.getElementById('statusIcon').textContent = '✅';
       dot.className = 'dot';
       headerText.textContent = 'Verfügbar';
     }
@@ -640,9 +706,9 @@
     var start = document.getElementById('inputStart').value;
     var end = document.getElementById('inputEnd').value;
 
-    if (!name) { showToast('⚠️ Bitte Name eingeben', true); return; }
-    if (!start || !end) { showToast('⚠️ Bitte Uhrzeit angeben', true); return; }
-    if (start >= end) { showToast('⚠️ Endzeit muss nach Startzeit liegen', true); return; }
+    if (!name) { showToast('⚠️ Bitte Name eingeben', 'error'); return; }
+    if (!start || !end) { showToast('⚠️ Bitte Uhrzeit angeben', 'error'); return; }
+    if (start >= end) { showToast('⚠️ Endzeit muss nach Startzeit liegen', 'error'); return; }
 
     var dateStr = formatDate(selectedDate);
     var conflict = null;
@@ -650,21 +716,36 @@
       var b = bookings[i];
       if (b.date === dateStr && start < b.end && end > b.start) { conflict = b; break; }
     }
-    if (conflict) { showToast('⚠️ Konflikt mit Buchung von ' + conflict.name, true); return; }
+    if (conflict) { showToast('⚠️ Konflikt mit Buchung von ' + conflict.name, 'error'); return; }
 
     bookings.push({ id: Date.now().toString(), date: dateStr, name: name, purpose: purpose, start: start, end: end });
     document.getElementById('inputName').value = '';
     document.getElementById('inputPurpose').value = '';
     renderAll();
     await saveBookings();
-    showToast('✅ Buchung eingetragen!');
+    showToast('✅ Buchung eingetragen!', 'success');
   }
 
-  async function deleteBooking(id) {
-    bookings = bookings.filter(function(b) { return b.id !== id; });
+  function askDelete(id, name) {
+    pendingDeleteId = id;
+    document.getElementById('deleteDialogText').textContent =
+      'Buchung von "' + name + '" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.';
+    document.getElementById('deleteOverlay').classList.add('show');
+  }
+
+  function cancelDelete() {
+    pendingDeleteId = null;
+    document.getElementById('deleteOverlay').classList.remove('show');
+  }
+
+  async function confirmDelete() {
+    document.getElementById('deleteOverlay').classList.remove('show');
+    if (!pendingDeleteId) return;
+    bookings = bookings.filter(function(b) { return b.id !== pendingDeleteId; });
+    pendingDeleteId = null;
     renderAll();
     await saveBookings();
-    showToast('🗑️ Buchung gelöscht');
+    showToast('🗑️ Buchung gelöscht', '');
   }
 
   function changeMonth(dir) {
@@ -672,15 +753,9 @@
     renderCalendar();
   }
 
-  function escHtml(str) {
-    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-
-  // Auto-refresh every 60 seconds to pick up others' bookings
   setInterval(function() { loadBookings(); }, 60000);
   setInterval(updateStatus, 30000);
 
-  // Init
   updateFormDate();
   renderCalendar();
   loadBookings();
