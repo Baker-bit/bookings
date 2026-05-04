@@ -161,14 +161,13 @@
   .cal-day.selected { background: var(--accent); color: #fff; border-color: var(--accent); }
   .cal-day.selected:hover { background: var(--accent); color: #fff; }
   .cal-day.has-booking::after {
-    content: '';
+    content: '🚗';
     position: absolute;
-    bottom: 3px;
-    width: 4px; height: 4px;
-    border-radius: 50%;
-    background: var(--accent2);
+    bottom: 1px;
+    font-size: 9px;
+    line-height: 1;
   }
-  .cal-day.has-booking.selected::after { background: rgba(255,255,255,0.7); }
+  .cal-day.has-booking.selected::after { opacity: 0.85; }
 
   .booking-list { display: flex; flex-direction: column; gap: 8px; min-height: 80px; }
 
@@ -246,6 +245,7 @@
     transition: border-color 0.15s, box-shadow 0.15s;
   }
   input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+  input[type="time"] { -webkit-appearance: none; appearance: none; }
   .time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
   .btn {
@@ -439,8 +439,8 @@
       <div class="form-group">
         <label>Uhrzeit</label>
         <div class="time-row">
-          <input type="time" id="inputStart" value="08:00">
-          <input type="time" id="inputEnd" value="17:00">
+          <input type="time" id="inputStart" value="08:00" step="300">
+          <input type="time" id="inputEnd" value="17:00" step="300">
         </div>
       </div>
       <button class="btn" id="submitBtn" onclick="addBooking()">+ Buchung eintragen</button>
