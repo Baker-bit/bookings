@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Firmenwagen Buchung</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap');
+
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface2: #242424;
+    --border: #2e2e2e;
+    --accent: #c8f545;
+    --accent2: #f5a623;
+    --text: #f0f0f0;
+    --muted: #666;
+    --danger: #ff4d4d;
+    --radius: 12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    padding: 24px 16px;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .logo { display: flex; align-items: center; gap: 12px; }
+
+  .car-icon {
+    width: 44px; height: 44px;
+    background: var(--accent);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+
+  h1 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px; }
+  h1 span { color: var(--accent); }
+
+  .status-badge {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 8px 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+  }
+
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
+  }
+  .dot.busy { background: var(--danger); }
+  .dot.loading { background: var(--accent2); }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 20px;
+  }
+
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+  }
+
+  .card-title {
+    font-size: 0.75rem;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+  }
+
+  .cal-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .cal-nav button {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .cal-nav button:hover { background: var(--border); }
+  .cal-month { font-weight: 700; font-size: 1rem; }
+
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
+
+  .cal-day-label {
+    text-align: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--muted);
+    padding: 4px 0 8px;
+    text-transform: uppercase;
+  }
+
+  .cal-day {
+    aspect-ratio: 1;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.15s;
+    border: 1px solid transparent;
+  }
+
+  .cal-day:hover:not(.empty):not(.past) { background: var(--surface2); border-color: var(--border); }
+  .cal-day.empty { cursor: default; }
+  .cal-day.past { color: var(--muted); cursor: default; }
+  .cal-day.today { border-color: var(--accent); color: var(--accent); }
+  .cal-day.selected { background: var(--accent); color: #000; }
+  .cal-day.has-booking::after {
+    content: '';
+    position: absolute;
+    bottom: 3px;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--accent2);
+  }
+  .cal-day.has-booking.selected::after { background: #000; }
+
+  .booking-list { display: flex; flex-direction: column; gap: 10px; min-height: 80px; }
+
+  .booking-item {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .booking-item::before {
+    content: '';
+    position: absolute; left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--accent2);
+    border-radius: 3px 0 0 3px;
+  }
+  .booking-item.active-now::before { background: var(--accent); }
+  .booking-info { flex: 1; }
+  .booking-name { font-weight: 700; font-size: 0.9rem; }
+  .booking-time {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .booking-purpose { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+
+  .delete-btn {
+    background: none; border: none;
+    color: var(--muted); cursor: pointer;
+    font-size: 1rem; padding: 4px;
+    border-radius: 6px;
+    transition: color 0.15s, background 0.15s;
+  }
+  .delete-btn:hover { color: var(--danger); background: #2a1a1a; }
+
+  .empty-state {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.85rem;
+    padding: 24px 0;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .form-group { margin-bottom: 16px; }
+  label {
+    display: block;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 6px;
+  }
+
+  input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input:focus { border-color: var(--accent); }
+  .time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .btn {
+    width: 100%;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .btn:hover { opacity: 0.88; transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .selected-date-label {
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-bottom: 16px;
+    font-family: 'DM Mono', monospace;
+  }
+  .selected-date-label span { color: var(--accent); font-weight: 600; }
+
+  .status-banner {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .status-banner.in-use { border-color: var(--accent); background: #151f00; }
+  .status-info { flex: 1; }
+  .status-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .status-value { font-weight: 700; font-size: 1rem; }
+  .status-sub { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
+
+  .sync-bar {
+    display: flex; align-items: center; gap: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+  .sync-bar .sync-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .sync-bar.syncing .sync-dot { background: var(--accent2); animation: pulse 1s infinite; }
+  .sync-bar.error .sync-dot { background: var(--danger); }
+
+  .toast {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    background: var(--accent);
+    color: #000;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 999;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.error { background: var(--danger); color: #fff; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="car-icon">🚗</div>
+    <div>
+      <h1>Firmen<span>wagen</span></h1>
+      <div style="font-size:0.75rem;color:var(--muted);font-family:'DM Mono',monospace;">Buchungssystem</div>
+    </div>
+  </div>
+  <div class="status-badge">
+    <div class="dot" id="headerDot"></div>
+    <span id="headerStatusText">Lädt...</span>
+  </div>
+</header>
+
+<div id="statusBanner" class="status-banner">
+  <div style="font-size:2rem;" id="statusIcon">⏳</div>
+  <div class="status-info">
+    <div class="status-label">Aktueller Status</div>
+    <div class="status-value" id="statusValue">Daten werden geladen...</div>
+    <div class="status-sub" id="statusSub"></div>
+  </div>
+</div>
+
+<div class="sync-bar" id="syncBar">
+  <div class="sync-dot"></div>
+  <span id="syncText">Verbinde...</span>
+</div>
+
+<div class="grid">
+  <div>
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-title">Kalender</div>
+      <div class="cal-nav">
+        <button onclick="changeMonth(-1)">&#8249;</button>
+        <div class="cal-month" id="calMonth"></div>
+        <button onclick="changeMonth(1)">&#8250;</button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Buchungen — <span id="selectedDateLabel" style="color:var(--accent)"></span></div>
+      <div class="booking-list" id="bookingList"></div>
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <div class="card-title">Neue Buchung</div>
+      <div class="selected-date-label">Datum: <span id="formDateLabel">—</span></div>
+      <div class="form-group">
+        <label>Ihr Name</label>
+        <input type="text" id="inputName" placeholder="z.B. Max Mustermann">
+      </div>
+      <div class="form-group">
+        <label>Zweck / Ziel</label>
+        <input type="text" id="inputPurpose" placeholder="z.B. Fahrt nach Burg">
+      </div>
+      <div class="form-group">
+        <label>Uhrzeit</label>
+        <div class="time-row">
+          <input type="time" id="inputStart" value="08:00">
+          <input type="time" id="inputEnd" value="17:00">
+        </div>
+      </div>
+      <button class="btn" id="submitBtn" onclick="addBooking()">+ Buchung eintragen</button>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+      <div class="card-title">Nächste Buchungen</div>
+      <div id="upcomingList" class="booking-list"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  var BIN_ID = '69f88536aaba8821976c8fab';
+  var API_KEY = '$2a$10$d9A.ojocRSOIbTSPQJFqnOv/tf8EOdQsG9TOz34BG.hzOTVAXnsXa';
+  var BASE_URL = 'https://api.jsonbin.io/v3/b/' + BIN_ID;
+
+  var bookings = [];
+  var currentDate = new Date();
+  var selectedDate = new Date();
+  selectedDate.setHours(0,0,0,0);
+  var isSaving = false;
+
+  function setSyncState(state, text) {
+    var bar = document.getElementById('syncBar');
+    var syncText = document.getElementById('syncText');
+    bar.className = 'sync-bar' + (state ? ' ' + state : '');
+    syncText.textContent = text;
+  }
+
+  function showToast(msg, isError) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (isError ? ' error' : '');
+    setTimeout(function() { t.className = 'toast'; }, 2800);
+  }
+
+  function formatDate(d) {
+    var y = d.getFullYear();
+    var m = String(d.getMonth()+1).padStart(2,'0');
+    var day = String(d.getDate()).padStart(2,'0');
+    return y + '-' + m + '-' + day;
+  }
+
+  function formatDateDisplay(dateStr) {
+    var d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' });
+  }
+
+  async function loadBookings() {
+    setSyncState('syncing', 'Buchungen laden...');
+    try {
+      var resp = await fetch(BASE_URL + '/latest', {
+        headers: { 'X-Access-Key': API_KEY }
+      });
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      var data = await resp.json();
+      bookings = data.record.bookings || [];
+      setSyncState('', 'Synchronisiert ✓');
+      renderAll();
+    } catch(e) {
+      setSyncState('error', 'Verbindungsfehler');
+      showToast('⚠️ Daten konnten nicht geladen werden', true);
+    }
+  }
+
+  async function saveBookings() {
+    if (isSaving) return;
+    isSaving = true;
+    setSyncState('syncing', 'Speichern...');
+    document.getElementById('submitBtn').disabled = true;
+    try {
+      var resp = await fetch(BASE_URL, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Access-Key': API_KEY
+        },
+        body: JSON.stringify({ bookings: bookings })
+      });
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      setSyncState('', 'Gespeichert ✓');
+    } catch(e) {
+      setSyncState('error', 'Speichern fehlgeschlagen');
+      showToast('⚠️ Speichern fehlgeschlagen', true);
+    }
+    isSaving = false;
+    document.getElementById('submitBtn').disabled = false;
+  }
+
+  function renderAll() {
+    renderCalendar();
+    renderBookingList();
+    renderUpcoming();
+    updateStatus();
+    updateFormDate();
+  }
+
+  function renderCalendar() {
+    var year = currentDate.getFullYear();
+    var month = currentDate.getMonth();
+    var monthNames = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+    document.getElementById('calMonth').textContent = monthNames[month] + ' ' + year;
+
+    var grid = document.getElementById('calGrid');
+    grid.innerHTML = '';
+
+    var days = ['Mo','Di','Mi','Do','Fr','Sa','So'];
+    days.forEach(function(d) {
+      var el = document.createElement('div');
+      el.className = 'cal-day-label';
+      el.textContent = d;
+      grid.appendChild(el);
+    });
+
+    var firstDay = new Date(year, month, 1);
+    var startOffset = firstDay.getDay() - 1;
+    if (startOffset < 0) startOffset = 6;
+
+    for (var i = 0; i < startOffset; i++) {
+      var el = document.createElement('div');
+      el.className = 'cal-day empty';
+      grid.appendChild(el);
+    }
+
+    var daysInMonth = new Date(year, month + 1, 0).getDate();
+    var today = new Date(); today.setHours(0,0,0,0);
+
+    for (var d = 1; d <= daysInMonth; d++) {
+      var el = document.createElement('div');
+      el.className = 'cal-day';
+      el.innerHTML = '<span>' + d + '</span>';
+
+      var thisDate = new Date(year, month, d);
+      var dateStr = formatDate(thisDate);
+      var dayBookings = bookings.filter(function(b) { return b.date === dateStr; });
+
+      if (thisDate < today) el.classList.add('past');
+      if (thisDate.getTime() === today.getTime()) el.classList.add('today');
+      if (thisDate.getTime() === selectedDate.getTime()) el.classList.add('selected');
+      if (dayBookings.length > 0) el.classList.add('has-booking');
+
+      if (!el.classList.contains('past')) {
+        (function(date) {
+          el.onclick = function() {
+            selectedDate = date;
+            renderCalendar();
+            renderBookingList();
+            updateFormDate();
+          };
+        })(thisDate);
+      }
+      grid.appendChild(el);
+    }
+  }
+
+  function renderBookingList() {
+    var dateStr = formatDate(selectedDate);
+    document.getElementById('selectedDateLabel').textContent = formatDateDisplay(dateStr);
+
+    var list = document.getElementById('bookingList');
+    var dayBookings = bookings.filter(function(b) { return b.date === dateStr; })
+      .sort(function(a,b) { return a.start.localeCompare(b.start); });
+
+    if (dayBookings.length === 0) {
+      list.innerHTML = '<div class="empty-state">Keine Buchungen für diesen Tag</div>';
+      return;
+    }
+
+    list.innerHTML = '';
+    var now = new Date();
+    dayBookings.forEach(function(b) {
+      var start = new Date(dateStr + 'T' + b.start + ':00');
+      var end = new Date(dateStr + 'T' + b.end + ':00');
+      var isNow = now >= start && now <= end;
+
+      var item = document.createElement('div');
+      item.className = 'booking-item' + (isNow ? ' active-now' : '');
+      item.innerHTML =
+        '<div style="font-size:1.4rem">' + (isNow ? '🚗' : '📅') + '</div>' +
+        '<div class="booking-info">' +
+          '<div class="booking-name">' + escHtml(b.name) + '</div>' +
+          '<div class="booking-time">' + b.start + ' – ' + b.end + ' Uhr</div>' +
+          (b.purpose ? '<div class="booking-purpose">' + escHtml(b.purpose) + '</div>' : '') +
+        '</div>' +
+        '<button class="delete-btn" onclick="deleteBooking(\'' + b.id + '\')">✕</button>';
+      list.appendChild(item);
+    });
+  }
+
+  function renderUpcoming() {
+    var today = formatDate(new Date());
+    var upcoming = bookings
+      .filter(function(b) { return b.date >= today; })
+      .sort(function(a,b) { return a.date === b.date ? a.start.localeCompare(b.start) : a.date.localeCompare(b.date); })
+      .slice(0, 5);
+
+    var list = document.getElementById('upcomingList');
+    if (upcoming.length === 0) {
+      list.innerHTML = '<div class="empty-state">Keine bevorstehenden Buchungen</div>';
+      return;
+    }
+    list.innerHTML = '';
+    upcoming.forEach(function(b) {
+      var item = document.createElement('div');
+      item.className = 'booking-item';
+      item.innerHTML =
+        '<div class="booking-info">' +
+          '<div class="booking-name">' + escHtml(b.name) + '</div>' +
+          '<div class="booking-time">' + formatDateDisplay(b.date) + '</div>' +
+          '<div class="booking-time">' + b.start + ' – ' + b.end + ' Uhr' + (b.purpose ? ' · ' + escHtml(b.purpose) : '') + '</div>' +
+        '</div>';
+      list.appendChild(item);
+    });
+  }
+
+  function updateStatus() {
+    var now = new Date();
+    var todayStr = formatDate(now);
+    var nowTime = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+
+    var active = null;
+    for (var i = 0; i < bookings.length; i++) {
+      var b = bookings[i];
+      if (b.date === todayStr && b.start <= nowTime && b.end >= nowTime) { active = b; break; }
+    }
+
+    var banner = document.getElementById('statusBanner');
+    var dot = document.getElementById('headerDot');
+    var headerText = document.getElementById('headerStatusText');
+    var icon = document.getElementById('statusIcon');
+
+    if (active) {
+      banner.className = 'status-banner in-use';
+      document.getElementById('statusValue').textContent = active.name + ' fährt gerade';
+      document.getElementById('statusSub').textContent = active.start + ' – ' + active.end + ' Uhr' + (active.purpose ? ' · ' + active.purpose : '');
+      icon.textContent = '🚗';
+      dot.className = 'dot busy';
+      headerText.textContent = 'In Benutzung';
+    } else {
+      banner.className = 'status-banner';
+      document.getElementById('statusValue').textContent = 'Fahrzeug verfügbar';
+      document.getElementById('statusSub').textContent = 'Keine aktive Buchung';
+      icon.textContent = '🟢';
+      dot.className = 'dot';
+      headerText.textContent = 'Verfügbar';
+    }
+  }
+
+  function updateFormDate() {
+    document.getElementById('formDateLabel').textContent = formatDateDisplay(formatDate(selectedDate));
+  }
+
+  async function addBooking() {
+    var name = document.getElementById('inputName').value.trim();
+    var purpose = document.getElementById('inputPurpose').value.trim();
+    var start = document.getElementById('inputStart').value;
+    var end = document.getElementById('inputEnd').value;
+
+    if (!name) { showToast('⚠️ Bitte Name eingeben', true); return; }
+    if (!start || !end) { showToast('⚠️ Bitte Uhrzeit angeben', true); return; }
+    if (start >= end) { showToast('⚠️ Endzeit muss nach Startzeit liegen', true); return; }
+
+    var dateStr = formatDate(selectedDate);
+    var conflict = null;
+    for (var i = 0; i < bookings.length; i++) {
+      var b = bookings[i];
+      if (b.date === dateStr && start < b.end && end > b.start) { conflict = b; break; }
+    }
+    if (conflict) { showToast('⚠️ Konflikt mit Buchung von ' + conflict.name, true); return; }
+
+    bookings.push({ id: Date.now().toString(), date: dateStr, name: name, purpose: purpose, start: start, end: end });
+    document.getElementById('inputName').value = '';
+    document.getElementById('inputPurpose').value = '';
+    renderAll();
+    await saveBookings();
+    showToast('✅ Buchung eingetragen!');
+  }
+
+  async function deleteBooking(id) {
+    bookings = bookings.filter(function(b) { return b.id !== id; });
+    renderAll();
+    await saveBookings();
+    showToast('🗑️ Buchung gelöscht');
+  }
+
+  function changeMonth(dir) {
+    currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + dir, 1);
+    renderCalendar();
+  }
+
+  function escHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // Auto-refresh every 60 seconds to pick up others' bookings
+  setInterval(function() { loadBookings(); }, 60000);
+  setInterval(updateStatus, 30000);
+
+  // Init
+  updateFormDate();
+  renderCalendar();
+  loadBookings();
+</script>
+</body>
+</html>
