@@ -778,14 +778,13 @@
   // ─── JSONBIN ──────────────────────────────────────────────────
   const API_KEY  = '$2a$10$AQI9yI/6geWB3foXvxawxexTC3fWMKMQCrmxY6nDaDTYhCX50A0YW';
   const BIN_BOOKINGS = '69f88536aaba8821976c8fab';
-  const LOG_BIN_KEY  = 'firmenwagen_log_bin_id';
 
   const BASE = 'https://api.jsonbin.io/v3/b';
   const HEADERS = { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY };
 
   let bookings = [];
   let rideLog  = [];
-  let logBinId = localStorage.getItem(LOG_BIN_KEY) || null;
+  let logBinId = '6a042cedadc21f119a926ad9';
   let pendingDeleteId = null;
 
   // ─── SYNC BADGE ───────────────────────────────────────────────
@@ -822,12 +821,6 @@
   }
 
   // ─── INIT LOG BIN (create once, store ID in localStorage) ─────
-  async function ensureLogBin() {
-    if (logBinId) return logBinId;
-    logBinId = await createBin({ rides: [] }, 'huz-firmenwagen-log');
-    localStorage.setItem(LOG_BIN_KEY, logBinId);
-    return logBinId;
-  }
 
   // ─── LOAD ALL DATA ────────────────────────────────────────────
   async function loadAll() {
@@ -836,7 +829,6 @@
       bookings = Array.isArray(data.bookings) ? data.bookings : [];
       renderBookings();
 
-      await ensureLogBin();
       const logData = await readBin(logBinId);
       rideLog = Array.isArray(logData.rides) ? logData.rides : [];
       renderLog();
@@ -936,7 +928,6 @@
 
     try {
       // Archive to log bin
-      await ensureLogBin();
       const completedAt = new Date().toLocaleString('de-DE');
       rideLog.push({ ...b, completedAt });
       await writeBin(logBinId, { rides: rideLog });
