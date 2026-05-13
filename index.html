@@ -1,764 +1,990 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Firmenwagen Buchung</title>
+<title>Firmenwagen – HUZ</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
 
   :root {
-    --bg: #f0f4f8;
+    --bg: #f0f2f5;
     --surface: #ffffff;
-    --surface2: #f7f9fc;
-    --border: #dde3ec;
+    --surface2: #f7f8fa;
+    --border: #e2e5ea;
+    --text: #1a1d23;
+    --text-muted: #6b7280;
     --accent: #2563eb;
     --accent-light: #eff4ff;
-    --accent2: #f59e0b;
-    --accent2-light: #fffbeb;
-    --text: #1e293b;
-    --muted: #64748b;
-    --danger: #ef4444;
+    --accent-hover: #1d4ed8;
+    --danger: #dc2626;
     --danger-light: #fef2f2;
     --success: #16a34a;
     --success-light: #f0fdf4;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.10);
     --radius: 12px;
+    --radius-sm: 8px;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
+    font-family: 'DM Sans', sans-serif;
     background: var(--bg);
     color: var(--text);
-    font-family: 'Inter', sans-serif;
     min-height: 100vh;
-    padding: 24px 16px;
+    padding: 24px 16px 48px;
   }
 
   header {
+    max-width: 720px;
+    margin: 0 auto 32px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 24px;
     flex-wrap: wrap;
     gap: 12px;
   }
 
-  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
 
-  .car-icon {
+  .logo-icon {
     width: 44px; height: 44px;
     background: var(--accent);
-    border-radius: 10px;
+    border-radius: 12px;
     display: flex; align-items: center; justify-content: center;
     font-size: 22px;
   }
 
-  h1 { font-size: 1.3rem; font-weight: 700; color: var(--text); }
-  h1 span { color: var(--accent); }
+  .logo-text h1 {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+  }
 
-  .status-badge {
-    display: flex; align-items: center; gap: 8px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    padding: 7px 16px;
+  .logo-text p {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 400;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .sync-badge {
+    font-size: 11px;
     font-family: 'DM Mono', monospace;
-    font-size: 0.76rem;
-    color: var(--muted);
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    transition: all 0.3s;
   }
+  .sync-badge.ok { background: var(--success-light); border-color: #bbf7d0; color: var(--success); }
+  .sync-badge.err { background: var(--danger-light); border-color: #fecaca; color: var(--danger); }
 
-  .dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--success);
-    animation: pulse 2s infinite;
-  }
-  .dot.busy { background: var(--danger); }
-  .dot.loading { background: var(--accent2); }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-  }
-
-  .grid {
-    display: grid;
-    grid-template-columns: 1fr 330px;
-    gap: 18px;
-  }
-
-  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  .main { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
 
   .card {
     background: var(--surface);
-    border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 20px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
   }
 
   .card-title {
-    font-size: 0.7rem;
-    font-family: 'DM Mono', monospace;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-bottom: 16px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.1px;
   }
 
-  .cal-nav {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 14px;
-  }
+  .card-body { padding: 20px; }
 
-  .cal-nav button {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    color: var(--text);
-    width: 30px; height: 30px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 1rem;
-    display: flex; align-items: center; justify-content: center;
-    transition: background 0.15s;
-  }
-  .cal-nav button:hover { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
-  .cal-month { font-weight: 600; font-size: 0.95rem; color: var(--text); }
-
-  .cal-grid {
+  /* FORM */
+  .form-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 3px;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
   }
 
-  .cal-day-label {
-    text-align: center;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.65rem;
-    color: var(--muted);
-    padding: 3px 0 7px;
-    text-transform: uppercase;
-  }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
 
-  .cal-day {
-    aspect-ratio: 1;
-    display: flex; align-items: center; justify-content: center;
-    border-radius: 8px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    cursor: pointer;
-    position: relative;
-    transition: background 0.12s, color 0.12s;
-    border: 1px solid transparent;
-    color: var(--text);
-  }
-
-  .cal-day:hover:not(.empty):not(.past) { background: var(--accent-light); color: var(--accent); }
-  .cal-day.empty { cursor: default; }
-  .cal-day.past { color: #c1cad6; cursor: default; }
-  .cal-day.today { border-color: var(--accent); color: var(--accent); font-weight: 700; }
-  .cal-day.selected { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .cal-day.selected:hover { background: var(--accent); color: #fff; }
-  .cal-day.has-booking::after {
-    content: '🚗';
-    position: absolute;
-    bottom: 1px;
-    font-size: 9px;
-    line-height: 1;
-  }
-  .cal-day.has-booking.selected::after { opacity: 0.85; }
-
-  .booking-list { display: flex; flex-direction: column; gap: 8px; min-height: 80px; }
-
-  .booking-item {
-    display: flex; align-items: center; gap: 10px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 11px 13px;
-    position: relative;
-    overflow: hidden;
-    transition: box-shadow 0.15s;
-  }
-  .booking-item:hover { box-shadow: 0 2px 8px rgba(37,99,235,0.08); }
-
-  .booking-item::before {
-    content: '';
-    position: absolute; left: 0; top: 0; bottom: 0;
-    width: 3px;
-    background: var(--accent2);
-    border-radius: 3px 0 0 3px;
-  }
-  .booking-item.active-now { background: var(--success-light); border-color: #86efac; }
-  .booking-item.active-now::before { background: var(--success); }
-
-  .booking-info { flex: 1; }
-  .booking-name { font-weight: 600; font-size: 0.88rem; color: var(--text); }
-  .booking-time {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.7rem;
-    color: var(--muted);
-    margin-top: 2px;
-  }
-  .booking-purpose { font-size: 0.76rem; color: var(--muted); margin-top: 1px; }
-
-  .delete-btn {
-    background: none; border: none;
-    color: #c1cad6; cursor: pointer;
-    font-size: 0.85rem; padding: 5px 7px;
-    border-radius: 6px;
-    transition: color 0.15s, background 0.15s;
-    font-weight: 600;
-  }
-  .delete-btn:hover { color: var(--danger); background: var(--danger-light); }
-
-  .empty-state {
-    text-align: center;
-    color: var(--muted);
-    font-size: 0.82rem;
-    padding: 20px 0;
-    font-family: 'DM Mono', monospace;
-  }
-
-  .form-group { margin-bottom: 13px; }
   label {
-    display: block;
-    font-size: 0.7rem;
-    color: var(--muted);
-    font-weight: 600;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
     text-transform: uppercase;
-    letter-spacing: 0.8px;
-    margin-bottom: 5px;
+    letter-spacing: 0.5px;
   }
 
-  input {
-    width: 100%;
-    background: var(--surface2);
+  input, select, textarea {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    padding: 10px 12px;
     border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface2);
     color: var(--text);
-    padding: 9px 11px;
-    border-radius: 8px;
-    font-family: 'Inter', sans-serif;
-    font-size: 0.88rem;
     outline: none;
-    transition: border-color 0.15s, box-shadow 0.15s;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
   }
-  input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
-  input[type="time"] { -webkit-appearance: none; appearance: none; }
-  .time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    background: #fff;
+  }
+
+  textarea { resize: vertical; min-height: 72px; }
 
   .btn {
-    width: 100%;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 18px;
+    border-radius: var(--radius-sm);
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .btn-primary {
     background: var(--accent);
     color: #fff;
-    border: none;
-    padding: 11px;
-    border-radius: 10px;
-    font-family: 'Inter', sans-serif;
-    font-weight: 600;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
-    box-shadow: 0 2px 8px rgba(37,99,235,0.2);
   }
-  .btn:hover { background: #1d4ed8; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
-  .btn:active { transform: translateY(0); }
-  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+  .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
+  .btn-primary:disabled { background: #93c5fd; cursor: not-allowed; transform: none; box-shadow: none; }
 
-  .selected-date-label {
-    font-size: 0.78rem;
-    color: var(--muted);
-    margin-bottom: 14px;
-  }
-  .selected-date-label span { color: var(--accent); font-weight: 600; }
-
-  .status-banner {
-    background: var(--surface);
+  .btn-outline {
+    background: transparent;
+    color: var(--text-muted);
     border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px 18px;
-    margin-bottom: 18px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   }
-  .status-banner.in-use { border-color: #86efac; background: var(--success-light); }
-  .status-info { flex: 1; }
-  .status-label {
-    font-size: 0.68rem;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: var(--muted);
-    font-weight: 600;
-    margin-bottom: 3px;
-  }
-  .status-value { font-weight: 700; font-size: 0.95rem; color: var(--text); }
-  .status-sub { font-size: 0.78rem; color: var(--muted); margin-top: 1px; }
+  .btn-outline:hover { background: var(--surface2); color: var(--text); }
 
-  .sync-bar {
-    display: flex; align-items: center; gap: 7px;
-    font-size: 0.7rem;
-    color: var(--muted);
-    margin-bottom: 18px;
+  .btn-export {
+    background: var(--success-light);
+    color: var(--success);
+    border: 1px solid #bbf7d0;
+  }
+  .btn-export:hover { background: #dcfce7; }
+
+  .btn-sm { font-size: 12px; padding: 6px 12px; }
+
+  .form-footer {
+    margin-top: 16px;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  /* BOOKINGS LIST */
+  .bookings-list { display: flex; flex-direction: column; gap: 0; }
+
+  .booking-item {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  .booking-item:last-child { border-bottom: none; }
+  .booking-item:hover { background: var(--surface2); }
+
+  .booking-left { display: flex; gap: 14px; align-items: flex-start; }
+
+  .booking-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--accent-light);
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .booking-info .name {
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .booking-info .meta {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
     font-family: 'DM Mono', monospace;
   }
-  .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
-  .sync-bar.syncing .sync-dot { background: var(--accent2); animation: pulse 1s infinite; }
-  .sync-bar.error .sync-dot { background: var(--danger); }
 
-  /* Confirm dialog */
-  .overlay {
+  .booking-info .destination {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    font-style: italic;
+  }
+
+  .delete-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 4px;
+    border-radius: 6px;
+    line-height: 1;
+    font-size: 16px;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .delete-btn:hover { background: var(--danger-light); color: var(--danger); }
+
+  .empty-state {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+  .empty-state .icon { font-size: 32px; margin-bottom: 8px; }
+
+  /* LOG TAB */
+  .tabs {
+    display: flex;
+    gap: 2px;
+    background: var(--surface2);
+    border-radius: var(--radius-sm);
+    padding: 3px;
+  }
+
+  .tab-btn {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 7px 16px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .tab-btn.active {
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* LOG TABLE */
+  .log-table-wrap { overflow-x: auto; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  th {
+    text-align: left;
+    padding: 10px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  td {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+
+  .log-footer {
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    background: var(--surface2);
+  }
+
+  .log-count {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* MODAL */
+  .modal-overlay {
     display: none;
     position: fixed; inset: 0;
-    background: rgba(15,23,42,0.35);
+    background: rgba(0,0,0,0.35);
+    backdrop-filter: blur(4px);
     z-index: 100;
-    align-items: center; justify-content: center;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
   }
-  .overlay.show { display: flex; }
-  .dialog {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 24px;
-    width: 320px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-    text-align: center;
-  }
-  .dialog-icon { font-size: 2rem; margin-bottom: 10px; }
-  .dialog h3 { font-size: 1rem; font-weight: 700; margin-bottom: 6px; color: var(--text); }
-  .dialog p { font-size: 0.83rem; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
-  .dialog-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .btn-cancel {
-    background: var(--surface2);
-    color: var(--text);
-    border: 1px solid var(--border);
-    padding: 9px;
-    border-radius: 8px;
-    font-family: 'Inter', sans-serif;
-    font-weight: 600;
-    font-size: 0.85rem;
-    cursor: pointer;
-    transition: background 0.15s;
-  }
-  .btn-cancel:hover { background: var(--border); }
-  .btn-danger {
-    background: var(--danger);
-    color: #fff;
-    border: none;
-    padding: 9px;
-    border-radius: 8px;
-    font-family: 'Inter', sans-serif;
-    font-weight: 600;
-    font-size: 0.85rem;
-    cursor: pointer;
-    transition: background 0.15s;
-  }
-  .btn-danger:hover { background: #dc2626; }
+  .modal-overlay.open { display: flex; }
 
-  .toast {
-    position: fixed;
-    bottom: 24px; right: 24px;
-    background: var(--text);
-    color: #fff;
-    padding: 11px 18px;
-    border-radius: 10px;
-    font-weight: 600;
-    font-size: 0.82rem;
-    transform: translateY(80px);
-    opacity: 0;
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    z-index: 999;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  .modal {
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    padding: 24px;
+    max-width: 380px;
+    width: 100%;
   }
-  .toast.show { transform: translateY(0); opacity: 1; }
-  .toast.success { background: var(--success); }
-  .toast.error { background: var(--danger); }
+
+  .modal h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+  .modal p { font-size: 14px; color: var(--text-muted); line-height: 1.6; margin-bottom: 20px; }
+
+  .modal-ride-info {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    font-family: 'DM Mono', monospace;
+    line-height: 1.7;
+    color: var(--text);
+  }
+
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+  /* CALENDAR */
+  .cal-nav {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  .cal-title {
+    font-size: 14px;
+    font-weight: 600;
+    flex: 1;
+    text-align: center;
+    letter-spacing: -0.1px;
+  }
+
+  .cal-wrap { overflow-x: auto; padding: 0 20px 20px; }
+
+  .cal-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    margin-top: 16px;
+  }
+
+  .cal-table th {
+    text-align: center;
+    padding: 8px 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    border-bottom: 2px solid var(--border);
+    background: transparent;
+  }
+
+  .cal-table th.weekend { color: #dc2626; }
+
+  .cal-cell {
+    vertical-align: top;
+    padding: 6px 6px 8px;
+    border: 1px solid var(--border);
+    min-height: 80px;
+    height: 80px;
+  }
+
+  .cal-cell-empty { background: var(--surface2); border-color: var(--border); }
+
+  .cal-today { background: var(--accent-light); }
+  .cal-today .cal-day-num {
+    color: var(--accent);
+    font-weight: 700;
+    background: var(--accent);
+    color: #fff;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .cal-day-num {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    font-family: 'DM Mono', monospace;
+    width: 22px; height: 22px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .cal-events { display: flex; flex-direction: column; gap: 2px; }
+
+  .cal-event {
+    font-size: 10px;
+    padding: 2px 5px;
+    border-radius: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: default;
+    line-height: 1.4;
+  }
+
+  .cal-event-booking {
+    background: var(--accent-light);
+    color: var(--accent);
+    border: 1px solid rgba(37,99,235,0.2);
+  }
+
+  .cal-event-log {
+    background: var(--success-light);
+    color: var(--success);
+    border: 1px solid rgba(22,163,74,0.2);
+  }
+
+  .cal-legend {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .cal-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .cal-legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 520px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .form-group.full { grid-column: 1; }
+    header { flex-direction: column; align-items: flex-start; }
+    .cal-cell { min-height: 56px; height: 56px; }
+    .cal-event { display: none; }
+    .cal-cell:has(.cal-event) .cal-day-num::after {
+      content: '•';
+      color: var(--accent);
+      margin-left: 2px;
+    }
+  }
 </style>
 </head>
 <body>
 
 <header>
   <div class="logo">
-    <div class="car-icon">🚗</div>
-    <div>
-      <h1>Firmen<span>wagen</span></h1>
-      <div style="font-size:0.72rem;color:var(--muted);margin-top:1px;">Buchungssystem — HUZ</div>
+    <div class="logo-icon">🚗</div>
+    <div class="logo-text">
+      <h1>Firmenwagen</h1>
+      <p>Haeuser Zukunft GmbH</p>
     </div>
   </div>
-  <div class="status-badge">
-    <div class="dot" id="headerDot"></div>
-    <span id="headerStatusText">Lädt...</span>
+  <div class="header-actions">
+    <span class="sync-badge" id="syncBadge">Verbinde…</span>
   </div>
 </header>
 
-<div id="statusBanner" class="status-banner">
-  <div style="font-size:1.8rem;" id="statusIcon">⏳</div>
-  <div class="status-info">
-    <div class="status-label">Aktueller Status</div>
-    <div class="status-value" id="statusValue">Daten werden geladen...</div>
-    <div class="status-sub" id="statusSub"></div>
-  </div>
-</div>
+<div class="main">
 
-<div class="sync-bar" id="syncBar">
-  <div class="sync-dot"></div>
-  <span id="syncText">Verbinde...</span>
-</div>
-
-<div class="grid">
-  <div>
-    <div class="card" style="margin-bottom:18px;">
-      <div class="card-title">Kalender</div>
-      <div class="cal-nav">
-        <button onclick="changeMonth(-1)">&#8249;</button>
-        <div class="cal-month" id="calMonth"></div>
-        <button onclick="changeMonth(1)">&#8250;</button>
-      </div>
-      <div class="cal-grid" id="calGrid"></div>
+  <!-- BOOKING FORM -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Neue Buchung</span>
     </div>
-    <div class="card">
-      <div class="card-title">Buchungen — <span id="selectedDateLabel" style="color:var(--accent)"></span></div>
-      <div class="booking-list" id="bookingList"></div>
-    </div>
-  </div>
-
-  <div>
-    <div class="card">
-      <div class="card-title">Neue Buchung</div>
-      <div class="selected-date-label">Datum: <span id="formDateLabel">—</span></div>
-      <div class="form-group">
-        <label>Ihr Name</label>
-        <input type="text" id="inputName" placeholder="z.B. Max Mustermann">
-      </div>
-      <div class="form-group">
-        <label>Zweck / Ziel</label>
-        <input type="text" id="inputPurpose" placeholder="z.B. Fahrt nach Burg">
-      </div>
-      <div class="form-group">
-        <label>Uhrzeit</label>
-        <div class="time-row">
-          <input type="time" id="inputStart" value="08:00" step="300">
-          <input type="time" id="inputEnd" value="17:00" step="300">
+    <div class="card-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" id="fName" placeholder="Vor- und Nachname">
+        </div>
+        <div class="form-group">
+          <label>Datum</label>
+          <input type="date" id="fDate">
+        </div>
+        <div class="form-group">
+          <label>Startzeit</label>
+          <input type="time" id="fStart">
+        </div>
+        <div class="form-group">
+          <label>Endzeit</label>
+          <input type="time" id="fEnd">
+        </div>
+        <div class="form-group full">
+          <label>Ziel / Zweck</label>
+          <textarea id="fPurpose" placeholder="z.B. Fahrt nach Burg – Kundentermin"></textarea>
         </div>
       </div>
-      <button class="btn" id="submitBtn" onclick="addBooking()">+ Buchung eintragen</button>
+      <div class="form-footer">
+        <button class="btn btn-primary" id="saveBtn" onclick="saveBooking()">
+          <span>💾</span> Buchung speichern
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CURRENT BOOKINGS + LOG TABS -->
+  <div class="card">
+    <div class="card-header">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('bookings', this)">Aktuelle Buchungen</button>
+        <button class="tab-btn" onclick="switchTab('log', this)">Fahrtenprotokoll</button>
+        <button class="tab-btn" onclick="switchTab('calendar', this)">Kalender</button>
+      </div>
     </div>
 
-    <div class="card" style="margin-top:18px;">
-      <div class="card-title">Nächste Buchungen</div>
-      <div id="upcomingList" class="booking-list"></div>
+    <!-- BOOKINGS TAB -->
+    <div class="tab-panel active" id="tab-bookings">
+      <div class="bookings-list" id="bookingsList">
+        <div class="empty-state"><div class="icon">🚗</div>Keine aktiven Buchungen</div>
+      </div>
+    </div>
+
+    <!-- LOG TAB -->
+    <div class="tab-panel" id="tab-log">
+      <div class="log-table-wrap">
+        <table id="logTable">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Datum</th>
+              <th>Start</th>
+              <th>Ende</th>
+              <th>Ziel / Zweck</th>
+              <th>Abgeschlossen</th>
+            </tr>
+          </thead>
+          <tbody id="logBody">
+            <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-muted)">Noch keine abgeschlossenen Fahrten</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="log-footer">
+        <span class="log-count" id="logCount">0 Einträge</span>
+        <button class="btn btn-export btn-sm" onclick="exportExcel()">
+          <span>📥</span> Als Excel exportieren
+        </button>
+      </div>
+    </div>
+
+    <!-- CALENDAR TAB -->
+    <div class="tab-panel" id="tab-calendar">
+      <div class="cal-nav">
+        <button class="btn btn-outline btn-sm" onclick="calPrev()">‹</button>
+        <span class="cal-title" id="calTitle"></span>
+        <button class="btn btn-outline btn-sm" onclick="calNext()">›</button>
+      </div>
+      <div class="cal-wrap">
+        <table class="cal-table">
+          <thead>
+            <tr>
+              <th>Mo</th><th>Di</th><th>Mi</th><th>Do</th>
+              <th>Fr</th><th class="weekend">Sa</th><th class="weekend">So</th>
+            </tr>
+          </thead>
+          <tbody id="calGrid"></tbody>
+        </table>
+      </div>
+      <div class="log-footer">
+        <div class="cal-legend">
+          <div class="cal-legend-item">
+            <div class="cal-legend-dot" style="background:var(--accent-light);border:1px solid rgba(37,99,235,0.3)"></div>
+            Aktive Buchung
+          </div>
+          <div class="cal-legend-item">
+            <div class="cal-legend-dot" style="background:var(--success-light);border:1px solid rgba(22,163,74,0.3)"></div>
+            Abgeschlossen
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal">
+    <h3>Fahrt abschließen</h3>
+    <p>Diese Buchung wird ins Fahrtenprotokoll übertragen und dann entfernt.</p>
+    <div class="modal-ride-info" id="modalRideInfo"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Abbrechen</button>
+      <button class="btn btn-primary" id="confirmDeleteBtn">✓ Abschließen & archivieren</button>
     </div>
   </div>
 </div>
-
-<!-- Confirm delete dialog -->
-<div class="overlay" id="deleteOverlay">
-  <div class="dialog">
-    <div class="dialog-icon">🗑️</div>
-    <h3>Buchung löschen?</h3>
-    <p id="deleteDialogText">Möchten Sie diese Buchung wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.</p>
-    <div class="dialog-btns">
-      <button class="btn-cancel" onclick="cancelDelete()">Abbrechen</button>
-      <button class="btn-danger" onclick="confirmDelete()">Löschen</button>
-    </div>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
 
 <script>
-  var BIN_ID = '69f88536aaba8821976c8fab';
-  var API_KEY = '$2a$10$d9A.ojocRSOIbTSPQJFqnOv/tf8EOdQsG9TOz34BG.hzOTVAXnsXa';
-  var BASE_URL = 'https://api.jsonbin.io/v3/b/' + BIN_ID;
+  const API_KEY  = '$2a$10$d9A.ojocRSOIbTSPQJFqnOv/tf8EOdQsG9TOz34BG.hzOTVAXnsXa';
+  const BIN_BOOKINGS = '69f88536aaba8821976c8fab';
+  const LOG_BIN_KEY  = 'firmenwagen_log_bin_id';
 
-  var bookings = [];
-  var currentDate = new Date();
-  var selectedDate = new Date();
-  selectedDate.setHours(0,0,0,0);
-  var isSaving = false;
-  var pendingDeleteId = null;
+  const BASE = 'https://api.jsonbin.io/v3/b';
+  const HEADERS = { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY };
 
-  function setSyncState(state, text) {
-    var bar = document.getElementById('syncBar');
-    bar.className = 'sync-bar' + (state ? ' ' + state : '');
-    document.getElementById('syncText').textContent = text;
+  let bookings = [];
+  let rideLog  = [];
+  let logBinId = localStorage.getItem(LOG_BIN_KEY) || null;
+  let pendingDeleteId = null;
+
+  // ─── SYNC BADGE ───────────────────────────────────────────────
+  function badge(state, text) {
+    const el = document.getElementById('syncBadge');
+    el.className = 'sync-badge' + (state ? ' ' + state : '');
+    el.textContent = text;
   }
 
-  function showToast(msg, type) {
-    var t = document.getElementById('toast');
-    t.textContent = msg;
-    t.className = 'toast show' + (type ? ' ' + type : '');
-    setTimeout(function() { t.className = 'toast'; }, 2800);
+  // ─── JSONBIN HELPERS ──────────────────────────────────────────
+  async function readBin(id) {
+    const r = await fetch(`${BASE}/${id}/latest`, { headers: { 'X-Master-Key': API_KEY } });
+    if (!r.ok) throw new Error('Read failed');
+    const d = await r.json();
+    return d.record;
   }
 
-  function formatDate(d) {
-    var y = d.getFullYear();
-    var m = String(d.getMonth()+1).padStart(2,'0');
-    var day = String(d.getDate()).padStart(2,'0');
-    return y + '-' + m + '-' + day;
+  async function writeBin(id, data) {
+    const r = await fetch(`${BASE}/${id}`, {
+      method: 'PUT', headers: HEADERS, body: JSON.stringify(data)
+    });
+    if (!r.ok) throw new Error('Write failed');
   }
 
-  function formatDateDisplay(dateStr) {
-    var d = new Date(dateStr + 'T00:00:00');
-    return d.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' });
+  async function createBin(data, name) {
+    const r = await fetch(BASE, {
+      method: 'POST',
+      headers: { ...HEADERS, 'X-Bin-Name': name, 'X-Bin-Private': 'false' },
+      body: JSON.stringify(data)
+    });
+    if (!r.ok) throw new Error('Create bin failed');
+    const d = await r.json();
+    return d.metadata.id;
   }
 
-  function escHtml(str) {
-    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  // ─── INIT LOG BIN (create once, store ID in localStorage) ─────
+  async function ensureLogBin() {
+    if (logBinId) return logBinId;
+    logBinId = await createBin({ rides: [] }, 'huz-firmenwagen-log');
+    localStorage.setItem(LOG_BIN_KEY, logBinId);
+    return logBinId;
   }
 
-  async function loadBookings() {
-    setSyncState('syncing', 'Buchungen laden...');
+  // ─── LOAD ALL DATA ────────────────────────────────────────────
+  async function loadAll() {
     try {
-      var resp = await fetch(BASE_URL + '/latest', { headers: { 'X-Access-Key': API_KEY } });
-      if (!resp.ok) throw new Error('HTTP ' + resp.status);
-      var data = await resp.json();
-      bookings = data.record.bookings || [];
-      setSyncState('', 'Synchronisiert ✓');
-      renderAll();
-    } catch(e) {
-      setSyncState('error', 'Verbindungsfehler');
-      showToast('⚠️ Daten konnten nicht geladen werden', 'error');
+      const data = await readBin(BIN_BOOKINGS);
+      bookings = Array.isArray(data.bookings) ? data.bookings : [];
+      renderBookings();
+
+      await ensureLogBin();
+      const logData = await readBin(logBinId);
+      rideLog = Array.isArray(logData.rides) ? logData.rides : [];
+      renderLog();
+      renderCalendar();
+
+      badge('ok', 'Synchronisiert ✓');
+    } catch (e) {
+      badge('err', 'Fehler beim Laden');
     }
   }
 
-  async function saveBookings() {
-    if (isSaving) return;
-    isSaving = true;
-    setSyncState('syncing', 'Speichern...');
-    document.getElementById('submitBtn').disabled = true;
-    try {
-      var resp = await fetch(BASE_URL, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'X-Access-Key': API_KEY },
-        body: JSON.stringify({ bookings: bookings })
-      });
-      if (!resp.ok) throw new Error('HTTP ' + resp.status);
-      setSyncState('', 'Gespeichert ✓');
-    } catch(e) {
-      setSyncState('error', 'Speichern fehlgeschlagen');
-      showToast('⚠️ Speichern fehlgeschlagen', 'error');
+  // ─── SAVE BOOKING ─────────────────────────────────────────────
+  async function saveBooking() {
+    const name    = document.getElementById('fName').value.trim();
+    const date    = document.getElementById('fDate').value;
+    const start   = document.getElementById('fStart').value;
+    const end     = document.getElementById('fEnd').value;
+    const purpose = document.getElementById('fPurpose').value.trim();
+
+    if (!name || !date || !start || !end) {
+      alert('Bitte alle Pflichtfelder ausfüllen (Name, Datum, Start- und Endzeit).');
+      return;
     }
-    isSaving = false;
-    document.getElementById('submitBtn').disabled = false;
+
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span>⏳</span> Speichern…';
+    badge('', 'Speichern…');
+
+    try {
+      const booking = { id: Date.now().toString(), name, date, start, end, purpose };
+      bookings.push(booking);
+      await writeBin(BIN_BOOKINGS, { bookings });
+      renderBookings();
+      renderCalendar();
+      badge('ok', 'Gespeichert ✓');
+      // reset
+      ['fName','fDate','fStart','fEnd','fPurpose'].forEach(id => document.getElementById(id).value = '');
+    } catch (e) {
+      badge('err', 'Fehler beim Speichern');
+      bookings.pop();
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '<span>💾</span> Buchung speichern';
   }
 
-  function renderAll() {
-    renderCalendar();
-    renderBookingList();
-    renderUpcoming();
-    updateStatus();
-    updateFormDate();
+  // ─── RENDER BOOKINGS ──────────────────────────────────────────
+  function renderBookings() {
+    const el = document.getElementById('bookingsList');
+    if (!bookings.length) {
+      el.innerHTML = '<div class="empty-state"><div class="icon">🚗</div>Keine aktiven Buchungen</div>';
+      return;
+    }
+
+    const sorted = [...bookings].sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
+    el.innerHTML = sorted.map(b => {
+      const initials = b.name.split(' ').map(w => w[0]).join('').substring(0,2).toUpperCase();
+      const dateStr  = b.date ? new Date(b.date + 'T12:00').toLocaleDateString('de-DE', { weekday:'short', day:'2-digit', month:'2-digit', year:'numeric' }) : '—';
+      return `
+        <div class="booking-item">
+          <div class="booking-left">
+            <div class="booking-avatar">${initials}</div>
+            <div class="booking-info">
+              <div class="name">${esc(b.name)}</div>
+              <div class="meta">📅 ${dateStr} &nbsp;|&nbsp; 🕐 ${b.start} – ${b.end} Uhr</div>
+              ${b.purpose ? `<div class="destination">📍 ${esc(b.purpose)}</div>` : ''}
+            </div>
+          </div>
+          <button class="delete-btn" onclick="openDeleteModal('${b.id}')" title="Fahrt abschließen">✕</button>
+        </div>`;
+    }).join('');
   }
+
+  // ─── DELETE / ARCHIVE FLOW ────────────────────────────────────
+  function openDeleteModal(id) {
+    const b = bookings.find(x => x.id === id);
+    if (!b) return;
+    pendingDeleteId = id;
+    const dateStr = b.date ? new Date(b.date + 'T12:00').toLocaleDateString('de-DE', { weekday:'long', day:'2-digit', month:'long', year:'numeric' }) : '—';
+    document.getElementById('modalRideInfo').innerHTML =
+      `<strong>${esc(b.name)}</strong><br>${dateStr}<br>${b.start} – ${b.end} Uhr${b.purpose ? '<br>📍 ' + esc(b.purpose) : ''}`;
+    document.getElementById('deleteModal').classList.add('open');
+    document.getElementById('confirmDeleteBtn').onclick = () => confirmDelete(id);
+  }
+
+  function closeModal() {
+    document.getElementById('deleteModal').classList.remove('open');
+    pendingDeleteId = null;
+  }
+
+  async function confirmDelete(id) {
+    closeModal();
+    badge('', 'Archivieren…');
+    const b = bookings.find(x => x.id === id);
+    if (!b) return;
+
+    try {
+      // Archive to log bin
+      await ensureLogBin();
+      const completedAt = new Date().toLocaleString('de-DE');
+      rideLog.push({ ...b, completedAt });
+      await writeBin(logBinId, { rides: rideLog });
+
+      // Remove from bookings bin
+      bookings = bookings.filter(x => x.id !== id);
+      await writeBin(BIN_BOOKINGS, { bookings });
+
+      renderBookings();
+      renderLog();
+      renderCalendar();
+      badge('ok', 'Archiviert ✓');
+    } catch (e) {
+      badge('err', 'Fehler beim Archivieren');
+    }
+  }
+
+  // ─── RENDER LOG ───────────────────────────────────────────────
+  function renderLog() {
+    const tbody = document.getElementById('logBody');
+    document.getElementById('logCount').textContent = rideLog.length + ' Einträge';
+
+    if (!rideLog.length) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-muted)">Noch keine abgeschlossenen Fahrten</td></tr>';
+      return;
+    }
+
+    const sorted = [...rideLog].sort((a,b) => (b.date + b.start).localeCompare(a.date + a.start));
+    tbody.innerHTML = sorted.map(r => {
+      const dateStr = r.date ? new Date(r.date + 'T12:00').toLocaleDateString('de-DE') : '—';
+      return `<tr>
+        <td>${esc(r.name)}</td>
+        <td>${dateStr}</td>
+        <td>${r.start} Uhr</td>
+        <td>${r.end} Uhr</td>
+        <td>${esc(r.purpose || '—')}</td>
+        <td>${r.completedAt || '—'}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ─── EXPORT EXCEL ─────────────────────────────────────────────
+  function exportExcel() {
+    if (!rideLog.length) { alert('Keine Einträge zum Exportieren.'); return; }
+
+    const rows = [['Name','Datum','Startzeit','Endzeit','Ziel / Zweck','Abgeschlossen am']];
+    [...rideLog].sort((a,b) => (a.date + a.start).localeCompare(b.date + b.start)).forEach(r => {
+      const dateStr = r.date ? new Date(r.date + 'T12:00').toLocaleDateString('de-DE') : '—';
+      rows.push([r.name, dateStr, r.start, r.end, r.purpose || '', r.completedAt || '']);
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [22,14,10,10,40,22].map(w => ({ wch: w }));
+
+    // Style header row
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    for (let c = range.s.c; c <= range.e.c; c++) {
+      const addr = XLSX.utils.encode_cell({ r: 0, c });
+      if (!ws[addr]) continue;
+      ws[addr].s = { font: { bold: true }, fill: { fgColor: { rgb: 'EFF4FF' } } };
+    }
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Fahrtenprotokoll');
+
+    const today = new Date().toLocaleDateString('de-DE').replace(/\./g, '-');
+    XLSX.writeFile(wb, `Fahrtenprotokoll_HUZ_${today}.xlsx`);
+  }
+
+  // ─── TAB SWITCH ───────────────────────────────────────────────
+  function switchTab(name, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + name).classList.add('active');
+  }
+
+  // ─── HELPERS ─────────────────────────────────────────────────
+  function esc(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // Close modal on overlay click
+  document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  // Set today as default date
+  document.getElementById('fDate').valueAsDate = new Date();
+
+  // ─── CALENDAR ─────────────────────────────────────────────────
+  let calYear  = new Date().getFullYear();
+  let calMonth = new Date().getMonth();
+
+  const MONTH_NAMES = ['Januar','Februar','März','April','Mai','Juni',
+                       'Juli','August','September','Oktober','November','Dezember'];
 
   function renderCalendar() {
-    var year = currentDate.getFullYear();
-    var month = currentDate.getMonth();
-    var monthNames = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
-    document.getElementById('calMonth').textContent = monthNames[month] + ' ' + year;
+    document.getElementById('calTitle').textContent = MONTH_NAMES[calMonth] + ' ' + calYear;
 
-    var grid = document.getElementById('calGrid');
-    grid.innerHTML = '';
+    const map = {};
+    const add = (item, type) => {
+      if (!item.date) return;
+      if (!map[item.date]) map[item.date] = [];
+      map[item.date].push({ ...item, _type: type });
+    };
+    bookings.forEach(b => add(b, 'booking'));
+    rideLog.forEach(r => add(r, 'log'));
 
-    ['Mo','Di','Mi','Do','Fr','Sa','So'].forEach(function(d) {
-      var el = document.createElement('div');
-      el.className = 'cal-day-label';
-      el.textContent = d;
-      grid.appendChild(el);
-    });
+    const firstDay = new Date(calYear, calMonth, 1);
+    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+    const startDow = (firstDay.getDay() + 6) % 7; // Mon=0 … Sun=6
+    const today = new Date().toISOString().slice(0, 10);
 
-    var firstDay = new Date(year, month, 1);
-    var startOffset = firstDay.getDay() - 1;
-    if (startOffset < 0) startOffset = 6;
-    for (var i = 0; i < startOffset; i++) {
-      var el = document.createElement('div');
-      el.className = 'cal-day empty';
-      grid.appendChild(el);
-    }
+    const rows = Math.ceil((startDow + daysInMonth) / 7);
+    let html = '';
+    let day = 1;
 
-    var daysInMonth = new Date(year, month + 1, 0).getDate();
-    var today = new Date(); today.setHours(0,0,0,0);
-
-    for (var d = 1; d <= daysInMonth; d++) {
-      var el = document.createElement('div');
-      el.className = 'cal-day';
-      el.innerHTML = '<span>' + d + '</span>';
-      var thisDate = new Date(year, month, d);
-      var dateStr = formatDate(thisDate);
-      var dayBookings = bookings.filter(function(b) { return b.date === dateStr; });
-
-      if (thisDate < today) el.classList.add('past');
-      if (thisDate.getTime() === today.getTime()) el.classList.add('today');
-      if (thisDate.getTime() === selectedDate.getTime()) el.classList.add('selected');
-      if (dayBookings.length > 0) el.classList.add('has-booking');
-
-      if (!el.classList.contains('past')) {
-        (function(date) {
-          el.onclick = function() {
-            selectedDate = date;
-            renderCalendar();
-            renderBookingList();
-            updateFormDate();
-          };
-        })(thisDate);
+    for (let r = 0; r < rows; r++) {
+      html += '<tr>';
+      for (let c = 0; c < 7; c++) {
+        const idx = r * 7 + c;
+        if (idx < startDow || day > daysInMonth) {
+          html += '<td class="cal-cell cal-cell-empty"></td>';
+        } else {
+          const ds = `${calYear}-${String(calMonth + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+          const isToday = ds === today;
+          const evs = (map[ds] || []).sort((a, b) => (a.start || '').localeCompare(b.start || ''));
+          html += `<td class="cal-cell${isToday ? ' cal-today' : ''}">
+            <div class="cal-day-num">${day}</div>
+            <div class="cal-events">${evs.map(b =>
+              `<div class="cal-event cal-event-${b._type}" title="${esc(b.name)} · ${b.start}–${b.end} Uhr${b.purpose ? ' · ' + b.purpose : ''}">${esc(b.name.split(' ')[0])} ${b.start} Uhr</div>`
+            ).join('')}</div>
+          </td>`;
+          day++;
+        }
       }
-      grid.appendChild(el);
-    }
-  }
-
-  function renderBookingList() {
-    var dateStr = formatDate(selectedDate);
-    document.getElementById('selectedDateLabel').textContent = formatDateDisplay(dateStr);
-    var list = document.getElementById('bookingList');
-    var dayBookings = bookings.filter(function(b) { return b.date === dateStr; })
-      .sort(function(a,b) { return a.start.localeCompare(b.start); });
-
-    if (dayBookings.length === 0) {
-      list.innerHTML = '<div class="empty-state">Keine Buchungen für diesen Tag</div>';
-      return;
-    }
-    list.innerHTML = '';
-    var now = new Date();
-    dayBookings.forEach(function(b) {
-      var start = new Date(dateStr + 'T' + b.start + ':00');
-      var end = new Date(dateStr + 'T' + b.end + ':00');
-      var isNow = now >= start && now <= end;
-      var item = document.createElement('div');
-      item.className = 'booking-item' + (isNow ? ' active-now' : '');
-      item.innerHTML =
-        '<div style="font-size:1.3rem">' + (isNow ? '🚗' : '📅') + '</div>' +
-        '<div class="booking-info">' +
-          '<div class="booking-name">' + escHtml(b.name) + '</div>' +
-          '<div class="booking-time">' + b.start + ' – ' + b.end + ' Uhr</div>' +
-          (b.purpose ? '<div class="booking-purpose">' + escHtml(b.purpose) + '</div>' : '') +
-        '</div>' +
-        '<button class="delete-btn" title="Buchung löschen" onclick="askDelete(\'' + b.id + '\',\'' + escHtml(b.name) + '\')">✕</button>';
-      list.appendChild(item);
-    });
-  }
-
-  function renderUpcoming() {
-    var today = formatDate(new Date());
-    var upcoming = bookings
-      .filter(function(b) { return b.date >= today; })
-      .sort(function(a,b) { return a.date === b.date ? a.start.localeCompare(b.start) : a.date.localeCompare(b.date); })
-      .slice(0, 5);
-
-    var list = document.getElementById('upcomingList');
-    if (upcoming.length === 0) {
-      list.innerHTML = '<div class="empty-state">Keine bevorstehenden Buchungen</div>';
-      return;
-    }
-    list.innerHTML = '';
-    upcoming.forEach(function(b) {
-      var item = document.createElement('div');
-      item.className = 'booking-item';
-      item.innerHTML =
-        '<div class="booking-info">' +
-          '<div class="booking-name">' + escHtml(b.name) + '</div>' +
-          '<div class="booking-time">' + formatDateDisplay(b.date) + '</div>' +
-          '<div class="booking-time">' + b.start + ' – ' + b.end + ' Uhr' + (b.purpose ? ' · ' + escHtml(b.purpose) : '') + '</div>' +
-        '</div>';
-      list.appendChild(item);
-    });
-  }
-
-  function updateStatus() {
-    var now = new Date();
-    var todayStr = formatDate(now);
-    var nowTime = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
-    var active = null;
-    for (var i = 0; i < bookings.length; i++) {
-      var b = bookings[i];
-      if (b.date === todayStr && b.start <= nowTime && b.end >= nowTime) { active = b; break; }
+      html += '</tr>';
     }
 
-    var banner = document.getElementById('statusBanner');
-    var dot = document.getElementById('headerDot');
-    var headerText = document.getElementById('headerStatusText');
-
-    if (active) {
-      banner.className = 'status-banner in-use';
-      document.getElementById('statusValue').textContent = active.name + ' fährt gerade';
-      document.getElementById('statusSub').textContent = active.start + ' – ' + active.end + ' Uhr' + (active.purpose ? ' · ' + active.purpose : '');
-      document.getElementById('statusIcon').textContent = '🚗';
-      dot.className = 'dot busy';
-      headerText.textContent = 'In Benutzung';
-    } else {
-      banner.className = 'status-banner';
-      document.getElementById('statusValue').textContent = 'Fahrzeug verfügbar';
-      document.getElementById('statusSub').textContent = 'Keine aktive Buchung';
-      document.getElementById('statusIcon').textContent = '✅';
-      dot.className = 'dot';
-      headerText.textContent = 'Verfügbar';
-    }
+    document.getElementById('calGrid').innerHTML = html;
   }
 
-  function updateFormDate() {
-    document.getElementById('formDateLabel').textContent = formatDateDisplay(formatDate(selectedDate));
-  }
-
-  async function addBooking() {
-    var name = document.getElementById('inputName').value.trim();
-    var purpose = document.getElementById('inputPurpose').value.trim();
-    var start = document.getElementById('inputStart').value;
-    var end = document.getElementById('inputEnd').value;
-
-    if (!name) { showToast('⚠️ Bitte Name eingeben', 'error'); return; }
-    if (!start || !end) { showToast('⚠️ Bitte Uhrzeit angeben', 'error'); return; }
-    if (start >= end) { showToast('⚠️ Endzeit muss nach Startzeit liegen', 'error'); return; }
-
-    var dateStr = formatDate(selectedDate);
-    var conflict = null;
-    for (var i = 0; i < bookings.length; i++) {
-      var b = bookings[i];
-      if (b.date === dateStr && start < b.end && end > b.start) { conflict = b; break; }
-    }
-    if (conflict) { showToast('⚠️ Konflikt mit Buchung von ' + conflict.name, 'error'); return; }
-
-    bookings.push({ id: Date.now().toString(), date: dateStr, name: name, purpose: purpose, start: start, end: end });
-    document.getElementById('inputName').value = '';
-    document.getElementById('inputPurpose').value = '';
-    renderAll();
-    await saveBookings();
-    showToast('✅ Buchung eingetragen!', 'success');
-  }
-
-  function askDelete(id, name) {
-    pendingDeleteId = id;
-    document.getElementById('deleteDialogText').textContent =
-      'Buchung von "' + name + '" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.';
-    document.getElementById('deleteOverlay').classList.add('show');
-  }
-
-  function cancelDelete() {
-    pendingDeleteId = null;
-    document.getElementById('deleteOverlay').classList.remove('show');
-  }
-
-  async function confirmDelete() {
-    document.getElementById('deleteOverlay').classList.remove('show');
-    if (!pendingDeleteId) return;
-    bookings = bookings.filter(function(b) { return b.id !== pendingDeleteId; });
-    pendingDeleteId = null;
-    renderAll();
-    await saveBookings();
-    showToast('🗑️ Buchung gelöscht', '');
-  }
-
-  function changeMonth(dir) {
-    currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + dir, 1);
+  function calPrev() {
+    if (--calMonth < 0) { calMonth = 11; calYear--; }
     renderCalendar();
   }
 
-  setInterval(function() { loadBookings(); }, 60000);
-  setInterval(updateStatus, 30000);
+  function calNext() {
+    if (++calMonth > 11) { calMonth = 0; calYear++; }
+    renderCalendar();
+  }
 
-  updateFormDate();
-  renderCalendar();
-  loadBookings();
+  // Load on start + auto-refresh every 60s
+  loadAll();
+  setInterval(loadAll, 60000);
 </script>
 </body>
 </html>
