@@ -819,6 +819,7 @@
     if (!b) return;
 
     try {
+      console.log('Archiving booking:', b);
       const saved = await insertRow(TABLE_LOG, {
         id: b.id,
         name: b.name,
