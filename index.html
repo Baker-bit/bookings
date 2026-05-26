@@ -819,9 +819,15 @@
     if (!b) return;
 
     try {
-      const completedAt = new Date().toLocaleString('de-DE');
-      const { id: _bookingId, ...fields } = b;
-      const saved = await insertRow(TABLE_LOG, { ...fields, completedAt });
+      const saved = await insertRow(TABLE_LOG, {
+        id: b.id,
+        name: b.name,
+        date: b.date,
+        start: b.start,
+        end: b.end,
+        purpose: b.purpose,
+        completedAt: new Date().toLocaleString('de-DE')
+      });
       rideLog.push(saved);
 
       await deleteRow(TABLE_BOOKINGS, id);
