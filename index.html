@@ -670,16 +670,20 @@
 </div>
 
 <script>
-  // ─── JSONBIN ──────────────────────────────────────────────────
-  const API_KEY  = '$2a$10$AQI9yI/6geWB3foXvxawxexTC3fWMKMQCrmxY6nDaDTYhCX50A0YW';
-  const BIN_BOOKINGS = '69f88536aaba8821976c8fab';
+  // ─── SUPABASE ─────────────────────────────────────────────────
+  const SUPABASE_URL   = 'https://kylhmttosfprwdqlurie.supabase.co';
+  const SUPABASE_KEY   = 'sb_publishable_bD4i5_YbMTEgCD0RhCD2AQ_Ea2D9zqG';
+  const TABLE_BOOKINGS = 'firmenwagen_bookings';
+  const TABLE_LOG      = 'firmenwagen_log';
 
-  const BASE = 'https://api.jsonbin.io/v3/b';
-  const HEADERS = { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY };
+  const SB_HEADERS = {
+    'Content-Type': 'application/json',
+    'apikey': SUPABASE_KEY,
+    'Authorization': 'Bearer ' + SUPABASE_KEY
+  };
 
   let bookings = [];
   let rideLog  = [];
-  let logBinId = '6a042cedadc21f119a926ad9';
   let pendingDeleteId = null;
 
   // ─── SYNC BADGE ───────────────────────────────────────────────
@@ -689,43 +693,39 @@
     el.textContent = text;
   }
 
-  // ─── JSONBIN HELPERS ──────────────────────────────────────────
-  async function readBin(id) {
-    const r = await fetch(`${BASE}/${id}/latest`, { headers: { 'X-Master-Key': API_KEY } });
+  // ─── SUPABASE HELPERS ─────────────────────────────────────────
+  async function getRows(table) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=*`, { headers: SB_HEADERS });
     if (!r.ok) throw new Error('Read failed');
-    const d = await r.json();
-    return d.record;
+    return r.json();
   }
 
-  async function writeBin(id, data) {
-    const r = await fetch(`${BASE}/${id}`, {
-      method: 'PUT', headers: HEADERS, body: JSON.stringify(data)
-    });
-    if (!r.ok) throw new Error('Write failed');
-  }
-
-  async function createBin(data, name) {
-    const r = await fetch(BASE, {
+  async function insertRow(table, data) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
       method: 'POST',
-      headers: { ...HEADERS, 'X-Bin-Name': name, 'X-Bin-Private': 'false' },
+      headers: { ...SB_HEADERS, 'Prefer': 'return=representation' },
       body: JSON.stringify(data)
     });
-    if (!r.ok) throw new Error('Create bin failed');
-    const d = await r.json();
-    return d.metadata.id;
+    if (!r.ok) throw new Error('Insert failed');
+    const rows = await r.json();
+    return rows[0];
   }
 
-  // ─── INIT LOG BIN (create once, store ID in localStorage) ─────
+  async function deleteRow(table, id) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+      method: 'DELETE',
+      headers: SB_HEADERS
+    });
+    if (!r.ok) throw new Error('Delete failed');
+  }
 
   // ─── LOAD ALL DATA ────────────────────────────────────────────
   async function loadAll() {
     try {
-      const data = await readBin(BIN_BOOKINGS);
-      bookings = Array.isArray(data.bookings) ? data.bookings : [];
+      bookings = await getRows(TABLE_BOOKINGS);
       renderBookings();
 
-      const logData = await readBin(logBinId);
-      rideLog = Array.isArray(logData.rides) ? logData.rides : [];
+      rideLog = await getRows(TABLE_LOG);
       renderLog();
       renderCalendar();
 
@@ -754,17 +754,14 @@
     badge('', 'Speichern…');
 
     try {
-      const booking = { id: Date.now().toString(), name, date, start, end, purpose };
-      bookings.push(booking);
-      await writeBin(BIN_BOOKINGS, { bookings });
+      const saved = await insertRow(TABLE_BOOKINGS, { name, date, start, end, purpose });
+      bookings.push(saved);
       renderBookings();
       renderCalendar();
       badge('ok', 'Gespeichert ✓');
-      // reset
       ['fName','fDate','fStart','fEnd','fPurpose'].forEach(id => document.getElementById(id).value = '');
     } catch (e) {
       badge('err', 'Fehler beim Speichern');
-      bookings.pop();
     }
 
     btn.disabled = false;
@@ -822,14 +819,13 @@
     if (!b) return;
 
     try {
-      // Archive to log bin
       const completedAt = new Date().toLocaleString('de-DE');
-      rideLog.push({ ...b, completedAt });
-      await writeBin(logBinId, { rides: rideLog });
+      const { id: _bookingId, ...fields } = b;
+      const saved = await insertRow(TABLE_LOG, { ...fields, completedAt });
+      rideLog.push(saved);
 
-      // Remove from bookings bin
+      await deleteRow(TABLE_BOOKINGS, id);
       bookings = bookings.filter(x => x.id !== id);
-      await writeBin(BIN_BOOKINGS, { bookings });
 
       renderBookings();
       renderLog();
