@@ -754,7 +754,7 @@
     badge('', 'Speichern…');
 
     try {
-      const saved = await insertRow(TABLE_BOOKINGS, { name, date, start, end, purpose });
+      const saved = await insertRow(TABLE_BOOKINGS, { id: Date.now().toString(), name, date, start, end, purpose });
       bookings.push(saved);
       renderBookings();
       renderCalendar();
